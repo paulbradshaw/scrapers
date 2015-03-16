@@ -1,0 +1,53 @@
+import scraperwiki
+import urlparse
+import lxml.html
+
+# scrape_table function: gets passed an individual page to scrape
+def scrape_table(url):
+    html = scraperwiki.scrape(url)
+    print html
+    root = lxml.html.fromstring(html)
+
+#MAY BE BETTER TO USE     rows = root.cssselect("article div")  
+#ALSO CAN THEN ADD alltext = row[0].text_content()
+
+    #line below selects all <div class="block size3of4"> - note that because there is a space in the value of the div class, we need to put it in inverted commas as a string
+    rows = root.cssselect("div.'block size3of4'")  
+    for row in rows:
+        # Set up our data record - we'll need it later
+        print row
+        record = {}
+        #initialise the variables here, otherwise they won't exist if the 'if' tests aren't met below, and an error will be generated
+        membername = ""
+        membertitle = ""
+        memberbiog = ""
+        #grab all <h4> tags within our <div>
+        h4s = row.cssselect("h4")
+        #if there are any, grab the first and put it in membername variable
+        if h4s: 
+            membername = h4s[0].text
+        #repeat process for <h4><span>, and further down, the second <p>
+        spans = row.cssselect("h4 span")
+        if spans:
+            membertitle = spans[0].text
+        ps = row.cssselect("p")
+        if ps:
+            memberbiog = ps[-1].text_content()
+        record['Name'] = membername
+        record['Title'] = membertitle
+        record['Description'] = memberbiog
+        print record, '------------'
+        # Finally, save the record to the datastore - 'Artist' is our unique key
+        scraperwiki.sqlite.save(["Name"], record)
+        
+
+#starting_url ='http://www.hammersmithfulhamccg.nhs.uk/about-us/board.aspx'
+#scrape_and_look_for_next_link(starting_url)
+
+#list of URLs with similar CMS compiled with this advanced search on Google:
+#inurl:about-us/board.aspx CCG
+#https://www.google.co.uk/search?q=ccg+nhs+uk+board&channel=linkdoctor&safe=on#hl=en&safe=active&sclient=psy-ab&q=inurl:about-us%2Fboard.aspx+CCG&oq=inurl:about-us%2Fboard.aspx+CCG&gs_l=serp.3...8135.8741.2.9010.4.4.0.0.0.0.92.351.4.4.0...0.0...1c.1.xmE9ViOJ14U&pbx=1&bav=on.2,or.r_gc.r_pw.r_cp.r_qf.&fp=4a762d82895734c9&bpcl=35466521&biw=1058&bih=531
+
+ccglist = ['www.brentccg.nhs.uk/', 'www.ealingccg.nhs.uk/', 'www.hounslowccg.nhs.uk/', 'www.westlondonccg.nhs.uk/', 'www.centrallondonccg.nhs.uk/', 'www.harrowccg.nhs.uk/', 'www.hammersmithfulhamccg.nhs.uk/']
+for ccg in ccglist:
+    scrape_and_look_for_next_link('http://'+ccg+'about-us/board.aspx')
