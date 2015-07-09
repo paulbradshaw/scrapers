@@ -5,7 +5,7 @@ import requests
 import lxml.html
 
 bbcurl = "http://www.bbc.co.uk/news/england/birmingham_and_black_country/"
-
+print bbcurl
 html = scraperwiki.scrape(bbcurl)
 print lxml.html.fromstring(html)
 root = lxml.html.fromstring(html)
